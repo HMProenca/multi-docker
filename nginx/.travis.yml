@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t hugomp/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true USERNAME/react-test npm test
+
+after_success:
+  - docker build -t hugomp/multi-client ./client
+  - docker build -t hugomp/multi-nginx ./nginx
+  - docker build -t hugomp/multi-server ./server
+  - docker build -t hugomp/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to the docker hub
+  - docker push hugomp/multi-client
+  - docker push hugomp/multi-nginx
+  - docker push hugomp/multi-server
+  - docker push hugomp/multi-worker
